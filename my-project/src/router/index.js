@@ -1,8 +1,8 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import Home from '../pages/Home.vue'
-import Page2 from '../pages/Page2.vue'
-import Page3 from '../pages/Page3.vue'
+import Demo from '../pages/Demo.vue'
+import About from '../pages/About.vue'
 
 Vue.use(Router)
 
@@ -14,20 +14,16 @@ export default new Router({
       component: Home
     },{
           path: '/page1',
-          name: 'Page1',
+          name: 'Home',
           component: Home
       },{
           path: '/page2',
-          name: 'Page2',
-          component: Page2
+          name: 'Demo',
+          component: Demo
       },{
           path: '/page3',
-          name: 'Page3',
-          component: Page3
-      },{
-          path: '/page4',
-          name: 'Page4',
-          component: Home
+          name: 'About',
+          component: About
       }
   ]
 })

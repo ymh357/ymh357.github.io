@@ -1,18 +1,24 @@
 <template>
-  <div>
-    <navigation-bar></navigation-bar>
-    <page-list></page-list>
+  <div class="row">
+    <div class="col-md-2"></div>
+    <div class="col-md-8">
+      <navigation-bar></navigation-bar>
+      <top-img></top-img>
+      <router-view></router-view>
+    </div>
+    <div class="col-md-2"></div>
   </div>
 </template>
 
 <script>
   import NavigationBar from './components/NavigationBar.vue'
-  import PageList from './components/PageList.vue'
+  import TopImg from './components/TopImg.vue'
 export default {
   name: 'app',
     components: {
       'navigation-bar': NavigationBar,
-        'page-list': PageList
+        'top-img': TopImg
     }
 }
 </script>
+
