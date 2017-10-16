@@ -1,6 +1,6 @@
 <template>
     <div>
-        <img src="../assets/home_1142px_1206693_easyicon.net.png">
+        <img src="/static/home_1142px_1206693_easyicon.net.png">
         <h3>简介<small>Introduction</small></h3>
         <p>
             This blog focuses on front-end tech.
@@ -18,6 +18,11 @@
 </template>
 
 <style scoped>
+    div{
+        padding: 10px;
+        margin-top: 40px;
+        background-image: url("/static/images.jpg");
+    }
     img{
         float:left;
         height:25px;

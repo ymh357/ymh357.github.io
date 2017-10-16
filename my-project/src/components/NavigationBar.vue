@@ -8,7 +8,7 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="#"><img src="../assets/lee_sin_512px_1128835_easyicon.net.png">Ymh的个人博客</a>
+                <a class="navbar-brand" href="#"><img src="/static/lee_sin_512px_1128835_easyicon.net.png">Ymh的个人博客</a>
             </div>
             <div class="collapse navbar-collapse" id="navbar">
                 <ul class="nav navbar-nav">
@@ -47,6 +47,11 @@
 </script>
 
 <style scoped>
+    nav{
+        /*background-image: url("../assets/xz.jpg");*/
+        background: none;
+        border:none;
+    }
     .navbar-brand>img{
         display: inline;
         height: 30px;

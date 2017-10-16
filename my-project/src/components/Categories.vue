@@ -1,6 +1,6 @@
 <template>
     <div>
-        <img src="../assets/Categories_65px_524338_easyicon.net.png">
+        <img src="/static/Categories_65px_524338_easyicon.net.png">
         <h3>文章分类<small>Categories</small></h3>
         <ul class="list-unstyled">
             <li class="categoryItem">CSS3 (0)</li>
@@ -14,6 +14,11 @@
 </template>
 
 <style scoped>
+    div{
+        padding: 10px;
+        margin-top:40px;
+        background: url("/static/images.jpg");
+    }
     .categoryItem{
         display:inline-block;
         width:110px;
