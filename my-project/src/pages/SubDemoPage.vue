@@ -24,3 +24,14 @@
         }
     }
 </script>
+
+<style scoped>
+    div{
+        margin-top:40px;
+        padding:20px;
+        background-color:white;
+    }
+    h2{
+        margin:0;
+    }
+</style>

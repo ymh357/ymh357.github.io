@@ -20,7 +20,6 @@
 <style scoped>
     div{
         padding: 10px;
-        margin-top: 40px;
         background-image: url("/static/images.jpg");
     }
     img{

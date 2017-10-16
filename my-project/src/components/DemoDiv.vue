@@ -28,9 +28,8 @@
 
 <style scoped>
     div{
-        margin: 20px 20px;
+        margin:0;
         border-bottom: 1px dashed #8c8c8c;
-        padding-bottom: 20px;
     }
     img{
         float: left;
