@@ -2,15 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="9d9c2e9e-5f12-4748-9ff0-123f314f6acb" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/my-project/src/pages/Article1.vue" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/my-project/src/pseudo-Database/articles.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gitignore" afterPath="$PROJECT_DIR$/.gitignore" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/my-project/src/components/ArticleDiv.vue" afterPath="$PROJECT_DIR$/my-project/src/components/ArticleDiv.vue" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/my-project/src/components/Categories.vue" afterPath="$PROJECT_DIR$/my-project/src/components/Categories.vue" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/my-project/src/pages/SubArticlesPage.vue" afterPath="$PROJECT_DIR$/my-project/src/pages/SubArticlesPage.vue" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/my-project/src/router/index.js" afterPath="$PROJECT_DIR$/my-project/src/router/index.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/static/js/app.230df81e0b22ba36da04.js" afterPath="$PROJECT_DIR$/static/js/app.230df81e0b22ba36da04.js" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -222,12 +214,12 @@
       <workItem from="1508131506660" duration="4899000" />
       <workItem from="1508144719362" duration="13809000" />
       <workItem from="1508208570096" duration="17496000" />
-      <workItem from="1508236437839" duration="90000" />
+      <workItem from="1508236437839" duration="406000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="58343000" />
+    <option name="totallyTimeSpent" value="58659000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-9" y="-9" width="1938" height="1048" extended-state="6" />
