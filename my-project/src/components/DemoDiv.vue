@@ -1,9 +1,13 @@
 <template>
-    <div>
-        <img :src="demo.imgUrl" :alt="demo.name">
-        <strong>{{demo.name}}</strong>
-        <p>{{demo.introduction}}</p>
-        <a :href="demo.link">查看 »</a>
+    <div class="row">
+        <div class="col-md-4">
+            <img :src="demo.imgUrl" :alt="demo.name">
+        </div>
+        <div class="col-md-7 col-md-offset-1" id="description">
+            <p><strong>{{demo.name}}</strong></p>
+            <p>{{demo.introduction}}</p>
+            <a :href="demo.link">查看 »</a>
+        </div>
     </div>
 </template>
 
@@ -27,25 +31,21 @@
 </script>
 
 <style scoped>
-    div{
-        margin:0;
+    div.row{
         border-bottom: 1px dashed #8c8c8c;
     }
+    div#description{
+        padding-top:10px;
+    }
     img{
-        float: left;
-        width:190px;
-        height:120px;
+        width:100%;
     }
     strong{
         display: inline-block;
-        margin:10px 0px 10px 20px;
         color: #761c19;
     }
-    p{
-        margin:10px 0px 10px 210px;
-    }
+
     a{
         color: #ce8483;
-        margin:10px 0px 10px 20px;
     }
 </style>

@@ -27,7 +27,6 @@
 
 <style scoped>
     div{
-        margin-top:40px;
         padding:20px;
         background-color:white;
     }

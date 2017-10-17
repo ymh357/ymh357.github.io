@@ -1,13 +1,13 @@
 <template>
-  <div class="appWrapper">
-    <div class="row">
-      <div class="col-md-2"></div>
-      <div class="col-md-8">
-        <navigation-bar></navigation-bar>
-        <top-img></top-img>
-        <router-view></router-view>
+  <div class="appWrapper ">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-8 col-md-offset-2 col-xs-12">
+          <navigation-bar></navigation-bar>
+          <top-img></top-img>
+          <router-view></router-view>
+        </div>
       </div>
-      <div class="col-md-2"></div>
     </div>
     <my-footer></my-footer>
   </div>

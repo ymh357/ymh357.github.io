@@ -5,7 +5,7 @@
             <article-div v-for="article in currentShownArticles" :article="article"></article-div>
             <div id="paging">
                 <span :style="{height:preHeight+'px'}"><a v-show="currentPage>1" href="" @click="toPrevious($event)" @mouseenter="preHeight+=10" @mouseleave="preHeight-=10" ><img src="/static/previous.png"></a></span>
-                <span>{{currentPage}}/3</span>
+                <span>{{currentPage}}/{{Math.ceil(currentArticles.length/4)}}</span>
                 <span :style="{height:nextHeight+'px'}"><a v-show="currentPage<currentArticles.length/4" href="" @click="toNext($event)" @mouseenter="nextHeight+=10" @mouseleave="nextHeight-=10"><img src="/static/next.png"></a></span>
             </div>
         </template>

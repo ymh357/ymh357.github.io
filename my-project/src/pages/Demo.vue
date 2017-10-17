@@ -3,8 +3,7 @@
         <div class="col-md-8">
             <sub-demo-page></sub-demo-page>
         </div>
-        <div class="col-md-1"></div>
-        <sub-nav-page class="col-md-3"></sub-nav-page>
+        <sub-nav-page class="col-md-3 col-md-offset-1"></sub-nav-page>
     </div>
 </template>
 <script>

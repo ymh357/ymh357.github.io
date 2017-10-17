@@ -2,12 +2,9 @@
     <div id="father">
         <h2>About</h2>
         <div class="row">
-            <div class="col-md-8">
-
-            </div>
-            <div class="col-md-4">
+            <div class="col-md-4 col-md-offset-8">
                 <div class="cc">
-                    <img src="/static/IMG_20170323_151728.jpg">
+                    <img src="/static/20171018001917.jpg">
                 </div>
                 <p>
                     Hi, I'm Ymh. Wish you like my blog.

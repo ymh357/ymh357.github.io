@@ -17,6 +17,6 @@
         color:white;
     }
     div{
-        padding:30px 0 0 160px;
+        padding:2% 0 0 5%;
     }
 </style>
