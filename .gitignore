@@ -1,3 +1,5 @@
 
 .gitignore
 .idea/inspectionProfiles/
+/my-project/.idea/
+my-project/src/assets/

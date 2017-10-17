@@ -7,7 +7,7 @@
             <li><small>分类：{{article.category}}</small></li>
         </ul>
         <p>{{article.summary}}</p>
-        <a href="">阅读全文 »</a>
+        <a :href="article.link">阅读全文 »</a>
     </div>
 </template>
 

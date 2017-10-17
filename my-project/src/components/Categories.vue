@@ -3,15 +3,62 @@
         <img src="/static/Categories_65px_524338_easyicon.net.png">
         <h3>文章分类<small>Categories</small></h3>
         <ul class="list-unstyled">
-            <li class="categoryItem">CSS3 (0)</li>
-            <li class="categoryItem">HTML5 (0)</li>
-            <li class="categoryItem">JS (0)</li>
-            <li class="categoryItem">sth1 (0)</li>
-            <li class="categoryItem">sth2 (0)</li>
-            <li class="categoryItem">sth3 (0)</li>
+            <li class="categoryItem"><a href="#/page1?category=前端综合">前端综合</a> ({{frontNum}})</li>
+            <li class="categoryItem"><a href="#/page1?category=后端综合">后端综合</a> ({{backNum}})</li>
+            <li class="categoryItem"><a href="#/page1?category=动漫综合">动漫综合</a> ({{animeNum}})</li>
+            <li class="categoryItem"><a href="#/page1?category=随笔综合">随笔综合</a> ({{essayNum}})</li>
         </ul>
     </div>
 </template>
+
+<script>
+    import {articles} from '../pseudo-Database/articles.js'
+    export default {
+        date (){
+            return {
+                articles: articles
+            }
+        },
+        computed: {
+            frontNum() {
+                let num=0;
+                for(let i=0;i<articles.length;i++){
+                    if(articles[i].category=='前端综合'){
+                        num ++;
+                    }
+                }
+                return num;
+            },
+            backNum() {
+                let num=0;
+                for(let i=0;i<articles.length;i++){
+                    if(articles[i].category=='后端综合'){
+                        num ++;
+                    }
+                }
+                return num;
+            },
+            animeNum() {
+                let num=0;
+                for(let i=0;i<articles.length;i++){
+                    if(articles[i].category=='动漫综合'){
+                        num ++;
+                    }
+                }
+                return num;
+            },
+            essayNum() {
+                let num=0;
+                for(let i=0;i<articles.length;i++){
+                    if(articles[i].category=='随笔综合'){
+                        num ++;
+                    }
+                }
+                return num;
+            }
+        }
+    }
+</script>
 
 <style scoped>
     div{
@@ -19,9 +66,12 @@
         margin-top:40px;
         background: url("/static/images.jpg");
     }
-    .categoryItem{
+    li.categoryItem{
         display:inline-block;
-        width:110px;
+        width:49%;
+    }
+    li.categoryItem>a{
+        color: #8a6d3b;
     }
     img{
         float:left;
@@ -32,7 +82,7 @@
         display: inline;
     }
     ul{
-        width:250px;
+        width:100%;
         margin-top:10px;
     }
 </style>

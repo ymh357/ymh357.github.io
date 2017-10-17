@@ -3,6 +3,7 @@ import Router from 'vue-router'
 import Home from '../pages/Home.vue'
 import Demo from '../pages/Demo.vue'
 import About from '../pages/About.vue'
+import Article1 from '../pages/Article1.vue'
 
 Vue.use(Router)
 
@@ -14,8 +15,14 @@ export default new Router({
       component: Home
     },{
           path: '/page1',
-          name: 'Home',
-          component: Home
+          name: 'Article',
+          component: Home,
+          children: [
+              {
+                path: '/article1',
+                component: Article1
+              }
+          ]
       },{
           path: '/page2',
           name: 'Demo',
