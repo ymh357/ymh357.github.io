@@ -4,7 +4,6 @@ import type React from 'react';
 import {
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 
@@ -66,7 +65,6 @@ export default function Invitation() {
     message: string;
     timestamp: number;
   }>>([]);
-  const messageBoardRef = useRef<HTMLElement>(null);
 
   // 婚礼日期 - 2025年5月1日
   const weddingDate = new Date(2025, 5, 1) // 月份是从0开始的，所以5代表6月
@@ -76,6 +74,7 @@ export default function Invitation() {
   const [galleryRef, galleryInView] = useInView({ threshold: 0.5 })
   const [rsvpRef, rsvpInView] = useInView({ threshold: 0.5 })
   const [mapRef, mapInView] = useInView({ threshold: 0.5 })
+  const [messageBoardRef, messageBoardInView] = useInView({ threshold: 0.5 })
 
   // 添加一个 useEffect 来处理窗口大小
   const [gallerySize, setGallerySize] = useState(300)
@@ -122,7 +121,8 @@ export default function Invitation() {
     else if (galleryInView) setCurrentSection(2)
     else if (rsvpInView) setCurrentSection(3)
     else if (mapInView) setCurrentSection(4)
-  }, [coverInView, detailsInView, galleryInView, rsvpInView, mapInView])
+    else if (messageBoardInView) setCurrentSection(5)
+  }, [coverInView, detailsInView, galleryInView, rsvpInView, mapInView, messageBoardInView])
 
   useEffect(() => {
     const messagesRef = query(
@@ -186,6 +186,7 @@ export default function Invitation() {
       document.getElementById("gallery"),
       document.getElementById("rsvp"),
       document.getElementById("map"),
+      document.getElementById("message-board"),
     ]
     sections[index]?.scrollIntoView({ behavior: "smooth" })
   }
@@ -208,7 +209,7 @@ export default function Invitation() {
       {/* Navigation dots */}
       <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-40">
         <div className="flex flex-col gap-4">
-          {[0, 1, 2, 3, 4].map((index) => (
+          {[0, 1, 2, 3, 4, 5].map((index) => (
             <button
               key={index}
               onClick={() => scrollToSection(index)}
