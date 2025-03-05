@@ -116,22 +116,6 @@
   @apply relative p-8;
 }
 
-.floral-border::before,
-.floral-border::after {
-  content: "";
-  @apply absolute w-16 h-16 bg-contain bg-no-repeat opacity-70;
-}
-
-.floral-border::before {
-  @apply top-0 left-0 rotate-180;
-  background-image: url("/placeholder.svg?height=64&width=64&text=🌸");
-}
-
-.floral-border::after {
-  @apply bottom-0 right-0;
-  background-image: url("/placeholder.svg?height=64&width=64&text=🌸");
-}
-
 /* 粒子动画 */
 @keyframes float {
   0%,
@@ -149,7 +133,14 @@
 
 /* 渐变背景 */
 .bg-wedding {
-  background: linear-gradient(135deg, #fff5f6 0%, #ffeef1 25%, #fff9fa 50%, #fef5f7 75%, #fff0f3 100%);
+  background: linear-gradient(
+    135deg,
+    #fff5f6 0%,
+    #ffeef1 25%,
+    #fff9fa 50%,
+    #fef5f7 75%,
+    #fff0f3 100%
+  );
 }
 
 /* 玻璃态效果 */
@@ -169,4 +160,3 @@
 .countdown-label {
   @apply text-xs text-rose-500 mt-1;
 }
-

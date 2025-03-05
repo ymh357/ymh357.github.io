@@ -1,17 +1,26 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
-import * as THREE from "three"
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
-import { motion, AnimatePresence } from "framer-motion"
-import { X } from "lucide-react"
+import {
+  memo,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+
+import {
+  AnimatePresence,
+  motion,
+} from 'framer-motion';
+import { X } from 'lucide-react';
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
 interface EnhancedGlobeGalleryProps {
   images: string[]
   size?: number
 }
 
-export default function EnhancedGlobeGallery({ images, size = 300 }: EnhancedGlobeGalleryProps) {
+function EnhancedGlobeGallery({ images, size }: EnhancedGlobeGalleryProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
@@ -102,7 +111,15 @@ export default function EnhancedGlobeGallery({ images, size = 300 }: EnhancedGlo
     const imageObjects: THREE.Mesh[] = []
     const imageUrlMap = new Map<THREE.Mesh, string>()
 
-    let loadedCount = 0
+    // 立即移除加载状态，不需要等待所有图片加载
+    setIsLoading(false)
+
+    // 创建一个临时的纯色材质作为图片加载前的占位符
+    const placeholderMaterial = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.5,
+    })
 
     images.forEach((imageUrl, index) => {
       // Use golden ratio for more even distribution
@@ -114,60 +131,96 @@ export default function EnhancedGlobeGallery({ images, size = 300 }: EnhancedGlo
       const y = radius * Math.sin(phi) * Math.sin(theta)
       const z = radius * Math.cos(phi)
 
-      // Create image plane
+      // 默认尺寸，后续会根据实际图片调整
+      const planeWidth = 1.2
+      const planeHeight = 0.9
+
+      // 创建几何体和使用占位符材质创建网格
+      const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight)
+      const plane = new THREE.Mesh(geometry, placeholderMaterial.clone())
+      plane.position.set(x, y, z)
+
+      // 添加一个帧
+      const frameGeometry = new THREE.PlaneGeometry(planeWidth + 0.05, planeHeight + 0.05)
+      const frameMaterial = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        side: THREE.DoubleSide,
+      })
+      const frame = new THREE.Mesh(frameGeometry, frameMaterial)
+      frame.position.set(x, y, z)
+
+      // 朝向中心
+      plane.lookAt(0, 0, 0)
+      frame.lookAt(0, 0, 0)
+
+      // 翻转使图片朝外
+      plane.rotateY(Math.PI)
+      frame.rotateY(Math.PI)
+
+      // 帧稍微在图片后面
+      frame.position.x *= 0.99
+      frame.position.y *= 0.99
+      frame.position.z *= 0.99
+
+      scene.add(frame)
+      scene.add(plane)
+      imageObjects.push(plane)
+      imageUrlMap.set(plane, imageUrl)
+
+      // 懒加载图片 - 仅创建一个Image对象开始加载，但不阻塞渲染
       const img = new Image()
       img.crossOrigin = "anonymous"
-      img.src = imageUrl
+
       img.onload = () => {
+        // 图片加载完成后，替换材质
         const texture = textureLoader.load(imageUrl)
 
-        // Calculate aspect ratio
+        // 计算正确的宽高比
         const aspectRatio = img.width / img.height
-        const planeWidth = 1.2 // 从0.8增加到1.2
-        const planeHeight = planeWidth / aspectRatio
+        const updatedHeight = planeWidth / aspectRatio
 
-        const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight)
-        const material = new THREE.MeshBasicMaterial({
+        // 更新平面的几何体以匹配图片比例
+        if (Math.abs(updatedHeight - planeHeight) > 0.1) {
+          // 如果高度变化明显，创建新的几何体
+          const newGeometry = new THREE.PlaneGeometry(planeWidth, updatedHeight)
+          plane.geometry.dispose()
+          plane.geometry = newGeometry
+
+          // 同时更新帧
+          const newFrameGeometry = new THREE.PlaneGeometry(planeWidth + 0.05, updatedHeight + 0.05)
+          frame.geometry.dispose()
+          frame.geometry = newFrameGeometry
+        }
+
+        // 替换为实际图片材质，并使用淡入效果
+        const imageMaterial = new THREE.MeshBasicMaterial({
           map: texture,
           side: THREE.DoubleSide,
           transparent: true,
+          opacity: 0,
         })
 
-        // Add a subtle frame to the image
-        const frameGeometry = new THREE.PlaneGeometry(planeWidth + 0.05, planeHeight + 0.05)
-        const frameMaterial = new THREE.MeshBasicMaterial({
-          color: 0xffffff,
-          side: THREE.DoubleSide,
-        })
-        const frame = new THREE.Mesh(frameGeometry, frameMaterial)
+        // 保存旧材质以便稍后释放
+        const oldMaterial = plane.material as THREE.MeshBasicMaterial
+        plane.material = imageMaterial
 
-        const plane = new THREE.Mesh(geometry, material)
-        plane.position.set(x, y, z)
-        frame.position.set(x, y, z)
-
-        // Make plane face outward from center of sphere
-        plane.lookAt(0, 0, 0)
-        frame.lookAt(0, 0, 0)
-
-        // Flip it so image faces outward
-        plane.rotateY(Math.PI)
-        frame.rotateY(Math.PI)
-
-        // Position the frame slightly behind the image
-        frame.position.x *= 0.99
-        frame.position.y *= 0.99
-        frame.position.z *= 0.99
-
-        scene.add(frame)
-        scene.add(plane)
-        imageObjects.push(plane)
-        imageUrlMap.set(plane, imageUrl)
-
-        loadedCount++
-        if (loadedCount === imageCount) {
-          setIsLoading(false)
+        // 淡入动画
+        const fadeIn = () => {
+          if (imageMaterial.opacity < 1) {
+            imageMaterial.opacity += 0.05
+            requestAnimationFrame(fadeIn)
+          } else {
+            // 材质完全显示后释放旧材质
+            oldMaterial.dispose()
+          }
         }
+
+        // 开始淡入动画
+        fadeIn()
       }
+
+      // 开始加载图片
+      img.src = imageUrl
     })
 
     // Handle click events
@@ -239,6 +292,10 @@ export default function EnhancedGlobeGallery({ images, size = 300 }: EnhancedGlo
     }
   }
 
+  if (!size) {
+    return null
+  }
+
   return (
     <div className="relative">
       <div
@@ -247,6 +304,7 @@ export default function EnhancedGlobeGallery({ images, size = 300 }: EnhancedGlo
         style={{ height: size, width: size }}
       />
 
+      {/* 加载状态只显示球体初始化阶段，不等待所有图片 */}
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-white/30 backdrop-blur-sm rounded-full">
           <div className="w-8 h-8 border-4 border-rose-500 border-t-transparent rounded-full animate-spin"></div>
@@ -291,3 +349,6 @@ export default function EnhancedGlobeGallery({ images, size = 300 }: EnhancedGlo
   )
 }
 
+
+
+export default memo(EnhancedGlobeGallery)

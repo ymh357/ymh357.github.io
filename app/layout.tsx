@@ -1,7 +1,13 @@
-import type React from "react"
-import "./globals.css"
-import type { Metadata } from "next"
-import { Great_Vibes, Cormorant_Garamond, Montserrat } from "next/font/google"
+import './globals.css';
+
+import type React from 'react';
+
+import type { Metadata } from 'next';
+import {
+  Cormorant_Garamond,
+  Great_Vibes,
+  Montserrat,
+} from 'next/font/google';
 
 // 优雅的手写体用于标题
 const greatVibes = Great_Vibes({
@@ -30,7 +36,7 @@ const montserrat = Montserrat({
 export const metadata: Metadata = {
   title: "Sarah & Michael | Wedding Invitation",
   description: "We invite you to celebrate our special day with us",
-    generator: 'v0.dev'
+  generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -39,14 +45,10 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={`${greatVibes.variable} ${cormorant.variable} ${montserrat.variable} font-sans`}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${greatVibes.variable} ${cormorant.variable} ${montserrat.variable} font-sans`} suppressHydrationWarning>
         {children}
       </body>
     </html>
   )
 }
-
-
-
-import './globals.css'
