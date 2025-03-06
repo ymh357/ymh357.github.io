@@ -36,7 +36,11 @@ const montserrat = Montserrat({
 export const metadata: Metadata = {
   title: "Sarah & Michael | Wedding Invitation",
   description: "We invite you to celebrate our special day with us",
-  generator: 'v0.dev'
+  generator: 'v0.dev',
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-icon.png',  // 可选
+  }
 }
 
 export default function RootLayout({

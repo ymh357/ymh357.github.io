@@ -16,7 +16,7 @@ import {
   X,
 } from 'lucide-react';
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 interface PhotoGallery3DProps {
   images: {
@@ -39,6 +39,9 @@ export default function PhotoGallery3D({ images, size = 400 }: PhotoGallery3DPro
   const photoUrlMapRef = useRef<Map<THREE.Mesh, string>>(new Map())
   const loadedImagesRef = useRef<Set<string>>(new Set())
   const loadingImagesRef = useRef<Set<string>>(new Set())
+  const geometriesRef = useRef<THREE.BufferGeometry[]>([])
+  const materialsRef = useRef<THREE.Material[]>([])
+  const texturesRef = useRef<THREE.Texture[]>([])
 
   // 初始化Three.js场景
   useEffect(() => {
@@ -169,6 +172,11 @@ export default function PhotoGallery3D({ images, size = 400 }: PhotoGallery3DPro
     photoObjectsRef.current.push(photo)
     photoUrlMapRef.current.set(photo, url)
 
+    // 记录资源以便清理
+    texturesRef.current.push(texture)
+    geometriesRef.current.push(photoGeometry)
+    materialsRef.current.push(photoMaterial)
+
     // 淡入动画
     const fadeIn = () => {
       if (photoMaterial.opacity < 1) {
@@ -276,7 +284,7 @@ export default function PhotoGallery3D({ images, size = 400 }: PhotoGallery3DPro
   // 检查并加载更多图片
   const checkAndLoadMoreImages = () => {
     // 限制同时加载的图片数量
-    if (loadingImagesRef.current.size >= 2) return
+    if (loadingImagesRef.current.size >= MAX_CONCURRENT_LOADS) return
 
     // 计算哪些图片在视野内但尚未加载
     const visibleUnloadedImages = images
@@ -382,6 +390,30 @@ export default function PhotoGallery3D({ images, size = 400 }: PhotoGallery3DPro
       }
     }
   }, [isInitializing, images])
+
+  // 在组件卸载时清理资源
+  useEffect(() => {
+    return () => {
+      // 清理所有资源
+      geometriesRef.current.forEach(geometry => geometry.dispose())
+      materialsRef.current.forEach(material => material.dispose())
+      texturesRef.current.forEach(texture => texture.dispose())
+
+      // 清理渲染器
+      if (rendererRef.current) {
+        rendererRef.current.dispose()
+        rendererRef.current.forceContextLoss()
+      }
+
+      // 清理场景
+      if (sceneRef.current) {
+        sceneRef.current.clear()
+      }
+    }
+  }, [])
+
+  // 限制同时加载的图片数量
+  const MAX_CONCURRENT_LOADS = 2
 
   return (
     <div className="relative">
