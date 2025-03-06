@@ -387,7 +387,7 @@ export default function PhotoGallery3D({ images, size = 400 }: PhotoGallery3DPro
     <div className="relative">
       <div
         ref={containerRef}
-        className="w-full aspect-square max-w-full mx-auto rounded-lg bg-gradient-to-br from-rose-50 to-rose-100 p-2 shadow-lg overflow-hidden"
+        className="w-full aspect-square max-w-full mx-auto rounded-full bg-gradient-to-br from-rose-50 to-rose-100 p-2 shadow-lg overflow-hidden"
         style={{ height: size, width: size }}
         onClick={handleClick}
       />
@@ -405,7 +405,7 @@ export default function PhotoGallery3D({ images, size = 400 }: PhotoGallery3DPro
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-[501] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
             onClick={closeFullsizeImage}
           >
             <motion.div

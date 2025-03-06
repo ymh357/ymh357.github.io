@@ -75,6 +75,13 @@
   }
 }
 
+body {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
 /* 自定义样式 */
 .font-script {
   font-family: var(--font-great-vibes);

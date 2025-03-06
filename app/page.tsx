@@ -4,6 +4,7 @@ import type React from 'react';
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -23,9 +24,12 @@ import {
   Check,
   ChevronDown,
   Clock,
+  Crown,
   Heart,
   Mail,
   MapPin,
+  Music,
+  Pause,
   Phone,
   X,
 } from 'lucide-react';
@@ -64,6 +68,9 @@ export default function Invitation() {
     message: string;
     timestamp: number;
   }>>([]);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // 婚礼日期 - 2025年5月1日
   const weddingDate = new Date(2025, 5, 1) // 月份是从0开始的，所以5代表6月
@@ -79,27 +86,12 @@ export default function Invitation() {
   const [gallerySize, setGallerySize] = useState(300)
 
   const photos = useMemo(() => {
-    return [
-      "/photos/43ba25fbdb3d425a6db1c4e4dfc89a62.png",
-      "/photos/婚礼插画制作.png",
-      "/photos/bg-L.png",
-      "/photos/bg-S.png",
-      "/photos/cc 2024-08-05T02_11_30.535Z.png",
-      "/photos/cc 2024-08-23T02_03_25.666Z.png",
-      "/photos/congratulation.png",
-      "/photos/network-error-day.png",
-      "/photos/network-error-night.png",
-      // "/photos/6Y7A5305.JPG",
-      // "/photos/6Y7A5306.JPG",
-      // "/photos/6Y7A5307.JPG",
-      // "/photos/6Y7A5308.JPG",
-      // "/photos/6Y7A5309.JPG",
-      // "/photos/6Y7A5310.JPG",
-
-    ].map((photo) => ({
-      thumbnail: photo,
-      fullsize: photo,
-    }))
+    return Array.from({ length: 35 }).map((_, i) => {
+      return {
+        thumbnail: `/photos/wedding-photo${i + 1}-min.JPG`,
+        fullsize: `/photos/wedding-photo${i + 1}.JPG`,
+      }
+    })
   }, [])
   useEffect(() => {
     const updateSize = () => {
@@ -154,6 +146,57 @@ export default function Invitation() {
     return () => unsubscribe();
   }, []);
 
+  const handleRef = useRef<NodeJS.Timeout | undefined>(undefined)
+  // 添加用户交互检测
+  useEffect(() => {
+    const handleInteraction = () => {
+      if (!hasInteracted && !handleRef.current) {  // 只在第一次交互时执行
+        setHasInteracted(true);
+        handleRef.current = setTimeout(() => {
+          // 尝试自动播放
+          if (audioRef.current) {
+            audioRef.current.play().then(() => {
+              setIsPlaying(true);
+            }).catch(error => {
+              console.log('Auto-play prevented:', error);
+              setIsPlaying(false);
+            });
+          }
+        }, 500);
+
+      }
+    };
+
+    // 监听更多的交互事件
+    const events = ['click', 'touchstart', 'scroll', 'keydown'];
+    events.forEach(event => {
+      window.addEventListener(event, handleInteraction, { once: true });
+    });
+
+    return () => {
+      events.forEach(event => {
+        window.removeEventListener(event, handleInteraction);
+      });
+    };
+  }, [hasInteracted]);
+
+  // 修改音频控制功能
+  useEffect(() => {
+    if (audioRef.current && hasInteracted) {
+      if (isPlaying) {
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(error => {
+            console.log('Playback failed:', error);
+            setIsPlaying(false);
+          });
+        }
+      } else {
+        audioRef.current.pause();
+      }
+    }
+  }, [isPlaying, hasInteracted]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
@@ -202,8 +245,72 @@ export default function Invitation() {
       .replace(/'/g, '&#039;');
   };
 
+  const [showGroomMessage, setShowGroomMessage] = useState(false);
+  const [showBrideMessage, setShowBrideMessage] = useState(false);
+  const [groomMessage, setGroomMessage] = useState("加载中...");
+  const [brideMessage, setBrideMessage] = useState("加载中...");
+
+  useEffect(() => {
+
+    // 添加新郎新娘消息的监听
+    const groomMessageRef = ref(db, 'weddingMessages/groom');
+    const brideMessageRef = ref(db, 'weddingMessages/bride');
+
+    const unsubscribeGroom = onValue(groomMessageRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data?.message) {
+        setGroomMessage(sanitizeInput(data.message));
+      }
+    });
+
+    const unsubscribeBride = onValue(brideMessageRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data?.message) {
+        setBrideMessage(sanitizeInput(data.message));
+      }
+    });
+
+    return () => {
+      unsubscribeGroom();
+      unsubscribeBride();
+    };
+  }, []);
+
   return (
     <div className="relative bg-wedding min-h-screen text-gray-800 overflow-hidden">
+      {/* 添加音频元素 */}
+      <audio
+        ref={audioRef}
+        src="/music/wedding-song.mp3"
+        loop
+        preload="auto"
+      />
+
+      {/* 修改音乐控制按钮 */}
+      <button
+        onClick={() => setIsPlaying(!isPlaying)}
+        className={`fixed bottom-6 right-6 z-[500] w-12 h-12 rounded-full bg-rose-500 hover:bg-rose-600 text-white shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 group ${!hasInteracted ? 'animate-pulse' : ''
+          }`}
+        aria-label={isPlaying ? '暂停音乐' : '播放音乐'}
+      >
+        <motion.div
+          animate={{
+            rotate: isPlaying ? 360 : 0
+          }}
+          transition={{
+            duration: 4,
+            repeat: isPlaying ? Infinity : 0,
+            ease: "linear"
+          }}
+        >
+          {isPlaying ? (
+            <Pause className="w-6 h-6" />
+          ) : (
+            <Music className="w-6 h-6" />
+          )}
+        </motion.div>
+      </button>
+
       {/* 背景装饰 */}
       <AnimatedHearts count={15} />
 
@@ -219,6 +326,71 @@ export default function Invitation() {
               aria-label={`Go to section ${index + 1}`}
             />
           ))}
+        </div>
+      </div>
+
+      {/* 添加新郎新娘头像和消息气泡 */}
+      <div className="fixed left-4 top-4 z-[500] flex flex-col gap-2">
+        {/* 新郎头像和消息 */}
+        <div className="relative">
+          <button
+            onClick={() => setShowGroomMessage(prev => !prev)}
+            className="w-8 h-8 rounded-full bg-white overflow-hidden border-2 border-rose-300 hover:border-rose-500 transition-all duration-300 shadow-lg hover:scale-105 flex items-center justify-center"
+          >
+            <Crown className="w-4 h-4 text-rose-500" />
+          </button>
+
+          {showGroomMessage && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8, x: -20 }}
+              animate={{ opacity: 1, scale: 1, x: 0 }}
+              className="absolute left-12 top-0 bg-white rounded-2xl p-4 shadow-lg w-72 border border-rose-200"
+            >
+              <button
+                onClick={() => setShowGroomMessage(false)}
+                className="absolute right-2 top-2 text-rose-400 hover:text-rose-600"
+              >
+                <X size={16} />
+              </button>
+              <p className="text-sm text-gray-700 leading-relaxed">
+                {groomMessage}
+              </p>
+              <div className="text-right mt-2 text-rose-500 font-script">
+                - 于明昊
+              </div>
+            </motion.div>
+          )}
+        </div>
+
+        {/* 新娘头像和消息 */}
+        <div className="relative">
+          <button
+            onClick={() => setShowBrideMessage(prev => !prev)}
+            className="w-8 h-8 rounded-full bg-white overflow-hidden border-2 border-rose-300 hover:border-rose-500 transition-all duration-300 shadow-lg hover:scale-105 flex items-center justify-center"
+          >
+            <Heart className="w-4 h-4 text-rose-500" />
+          </button>
+
+          {showBrideMessage && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8, x: -20 }}
+              animate={{ opacity: 1, scale: 1, x: 0 }}
+              className="absolute left-12 top-0 bg-white rounded-2xl p-4 shadow-lg w-72 border border-rose-200"
+            >
+              <button
+                onClick={() => setShowBrideMessage(false)}
+                className="absolute right-2 top-2 text-rose-400 hover:text-rose-600"
+              >
+                <X size={16} />
+              </button>
+              <p className="text-sm text-gray-700 leading-relaxed">
+                {brideMessage}
+              </p>
+              <div className="text-right mt-2 text-rose-500 font-script">
+                - 刘宽
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
 
@@ -340,13 +512,6 @@ export default function Invitation() {
             <p>拖动旋转 • 点击图片查看</p>
           </div>
 
-          {/* <div className="mt-8 text-center">
-            <p className="font-serif text-lg text-gray-700 mb-4">"爱情是灵魂的相遇，心灵的共鸣"</p>
-            <p className="text-gray-600">
-              我们相遇于2020年的春天，一路相伴走过风雨，如今终于迎来人生新的篇章。
-              感谢您能在这特别的日子与我们共同见证这美好的时刻。
-            </p>
-          </div> */}
         </motion.div>
       </section>
 
@@ -412,7 +577,7 @@ export default function Invitation() {
                         : "border-rose-300 text-rose-600 hover:bg-rose-50"
                     }
                   >
-                    <X className="w-4 h-4 mr-2" /> &#128533;男人不能说不行
+                    <X className="w-4 h-4 mr-2" /> 否（不准）
                   </Button>
                 </div>
               </div>
