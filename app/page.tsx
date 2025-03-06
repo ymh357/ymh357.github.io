@@ -36,8 +36,8 @@ import AMapLocation from '@/components/amap-location';
 import AnimatedHearts from '@/components/decorative/animated-heart';
 import CountdownTimer from '@/components/decorative/countdown-timer';
 import FloralDivider from '@/components/decorative/floral-divider';
-import EnhancedGlobeGallery from '@/components/enhanced-globe-gallery';
 import MapDirectionsButton from '@/components/map-directions-button';
+import PhotoGallery3D from '@/components/PhotoGallery3D';
 import {
   Alert,
   AlertDescription,
@@ -53,7 +53,6 @@ import {
 export default function Invitation() {
   const [currentSection, setCurrentSection] = useState(0)
   const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
   const [attending, setAttending] = useState<boolean | null>(null)
   const [message, setMessage] = useState("")
   const [submitted, setSubmitted] = useState(false)
@@ -97,7 +96,10 @@ export default function Invitation() {
       // "/photos/6Y7A5309.JPG",
       // "/photos/6Y7A5310.JPG",
 
-    ]
+    ].map((photo) => ({
+      thumbnail: photo,
+      fullsize: photo,
+    }))
   }, [])
   useEffect(() => {
     const updateSize = () => {
@@ -163,7 +165,6 @@ export default function Invitation() {
       // 在存储前进行 XSS 过滤
       await push(rsvpsRef, {
         name: sanitizeInput(name),
-        email: sanitizeInput(email),
         attending,
         message: message ? sanitizeInput(message) : null,
         timestamp: serverTimestamp(),
@@ -329,7 +330,7 @@ export default function Invitation() {
           <FloralDivider />
 
           <div className="flex justify-center mb-8">
-            <EnhancedGlobeGallery
+            <PhotoGallery3D
               images={photos}
               size={gallerySize}
             />
@@ -386,20 +387,6 @@ export default function Invitation() {
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium mb-1">
-                  电子邮箱
-                </label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full border-rose-200 focus:border-rose-400 focus:ring-rose-400"
-                />
-              </div>
-
-              <div>
                 <p className="block text-sm font-medium mb-2">您是否参加？</p>
                 <div className="flex gap-4">
                   <Button
@@ -446,7 +433,7 @@ export default function Invitation() {
               <Button
                 type="submit"
                 className="w-full bg-rose-500 hover:bg-rose-600"
-                disabled={!name || !email || attending === null || isSubmitting}
+                disabled={!name || attending === null || isSubmitting}
               >
                 {isSubmitting ? (
                   <>
@@ -476,31 +463,40 @@ export default function Invitation() {
 
       {/* Map Section */}
       <section className="py-12 px-6 bg-white" id="map" ref={mapRef}>
-        <div className="max-w-md mx-auto">
-          <h2 className="font-script text-4xl mb-2 text-center text-rose-700">婚礼地点</h2>
-          <p className="text-center text-rose-500 mb-6 font-serif">Location</p>
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ duration: 1 }}
+          viewport={{ once: true }}
+          className="max-w-md w-full"
+        >
+          <div className="max-w-md mx-auto">
+            <h2 className="font-script text-4xl mb-2 text-center text-rose-700">婚礼地点</h2>
+            <p className="text-center text-rose-500 mb-6 font-serif">Location</p>
 
-          <FloralDivider />
+            <FloralDivider />
 
-          <div className="aspect-video relative rounded-lg overflow-hidden shadow-lg border-4 border-white">
-            <AMapLocation
-              latitude={37.428392}  // 威海铂丽斯酒店的纬度
-              longitude={122.172677} // 威海铂丽斯酒店的经度
-              title="威海铂丽斯酒店"
-              address="威海铂丽斯酒店"
-            />
+            <div className="aspect-video relative rounded-lg overflow-hidden shadow-lg border-4 border-white">
+              <AMapLocation
+                latitude={37.428392}  // 威海铂丽斯酒店的纬度
+                longitude={122.172677} // 威海铂丽斯酒店的经度
+                title="威海铂丽斯酒店"
+                address="威海铂丽斯酒店"
+              />
+            </div>
+            <div className="mt-6 text-center">
+              <p className="font-serif font-medium text-lg">山东省威海市</p>
+              <p>经济技术开发区黄海路19号</p>
+              <MapDirectionsButton
+                address="山东省威海市经济技术开发区黄海路19号"
+                latitude={37.428392}  // 威海铂丽斯酒店的纬度
+                longitude={122.172677} // 威海铂丽斯酒店的经度
+                venueName="威海铂丽斯酒店"
+              />
+            </div>
           </div>
-          <div className="mt-6 text-center">
-            <p className="font-serif font-medium text-lg">山东省威海市</p>
-            <p>经济技术开发区黄海路19号</p>
-            <MapDirectionsButton
-              address="山东省威海市经济技术开发区黄海路19号"
-              latitude={37.428392}  // 威海铂丽斯酒店的纬度
-              longitude={122.172677} // 威海铂丽斯酒店的经度
-              venueName="威海铂丽斯酒店"
-            />
-          </div>
-        </div>
+        </motion.div>
+
       </section>
 
       {/* Message Board Section */}

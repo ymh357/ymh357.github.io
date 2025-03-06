@@ -47,9 +47,11 @@ function AMapComponent({ latitude, longitude, title, address }: AMapComponentPro
               position={[longitude, latitude]}
               title={title}
               label={{
-                content: address,
-                direction: 'bottom'
+                content: '',
+                direction: 'top'
               }}
+              icon="//a.amap.com/jsapi_demos/static/demo-center/icons/poi-marker-red.png"
+              animation="AMAP_ANIMATION_BOUNCE"
             />
           </Map>
         )}
