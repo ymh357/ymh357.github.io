@@ -462,7 +462,7 @@ export default function Invitation() {
       </section>
 
       {/* Map Section */}
-      <section className="py-12 px-6 bg-white" id="map" ref={mapRef}>
+      <section className="py-12 px-6 bg-white flex flex-col items-center justify-center" id="map" ref={mapRef}>
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
