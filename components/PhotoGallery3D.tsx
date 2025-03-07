@@ -267,7 +267,6 @@ export default function PhotoGallery3D({ images, size = 400 }: PhotoGallery3DPro
   ) => {
     if (!sceneRef.current || !isMountedRef.current) return null
 
-    // Adjust photo size based on aspect ratio
     const width = 3
     const height = width / aspectRatio
 
@@ -287,6 +286,7 @@ export default function PhotoGallery3D({ images, size = 400 }: PhotoGallery3DPro
     const photo = new THREE.Mesh(photoGeometry, photoMaterial)
     photo.position.copy(position)
     photo.rotation.copy(rotation)
+    photo.rotation.z += Math.PI
     photo.renderOrder = 1
 
     // Create frame with simplified geometry
@@ -300,6 +300,7 @@ export default function PhotoGallery3D({ images, size = 400 }: PhotoGallery3DPro
     frame.position.copy(position)
     frame.position.z -= 0.01
     frame.rotation.copy(rotation)
+    frame.rotation.z += Math.PI
     frame.renderOrder = 0
 
     // Add to scene
