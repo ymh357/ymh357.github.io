@@ -17,13 +17,13 @@ jobs:
           node-version: "18"
 
       - name: Install dependencies
-        run: yarn install # 替换 npm install
+        run: yarn install
 
       - name: Build Next.js
         env:
           NEXT_PUBLIC_API_KEY: ${{ secrets.NEXT_PUBLIC_API_KEY }}
           NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
-        run: yarn deploy # 替换 npm run build，使用 yarn deploy
+        run: yarn deploy
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
