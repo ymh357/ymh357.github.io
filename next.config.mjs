@@ -16,6 +16,8 @@ const nextConfig = {
     parallelServerCompiles: true,
   },
   transpilePackages: ["@uiw/react-amap"],
+  output: "export", // 静态导出模式
+  basePath: "", // 默认空即可，除非需要子路径
 };
 
 export default nextConfig;
