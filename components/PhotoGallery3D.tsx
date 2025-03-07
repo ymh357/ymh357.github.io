@@ -721,6 +721,7 @@ export default function PhotoGallery3D({ images, size = 400 }: PhotoGallery3DPro
               <motion.img
                 src={selectedImage}
                 alt="High-resolution photo"
+                loading="lazy"
                 className="w-full h-full object-contain rounded-lg border-4 border-white shadow-2xl"
                 onLoad={() => setIsFullsizeLoading(false)}
                 layoutId={`image-${selectedImage}`}

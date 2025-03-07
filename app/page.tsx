@@ -88,7 +88,7 @@ export default function Invitation() {
   const photos = useMemo(() => {
     return Array.from({ length: 35 }).map((_, i) => {
       return {
-        thumbnail: `/photos/wedding-photo${i + 1}-min.JPG`,
+        thumbnail: `/photos/wedding-photo_${i + 1}-min.jpg`,
         fullsize: `/photos/wedding-photo${i + 1}.JPG`,
       }
     })
