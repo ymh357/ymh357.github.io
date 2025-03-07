@@ -3,6 +3,7 @@
 import type React from 'react';
 import {
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -20,8 +21,8 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 interface PhotoGallery3DProps {
   images: {
-    thumbnail: string // 压缩版图片URL
-    fullsize: string // 高清图片URL
+    thumbnail: string // Compressed image URL
+    fullsize: string // High-resolution image URL
   }[]
   size?: number
 }
@@ -31,97 +32,232 @@ export default function PhotoGallery3D({ images, size = 400 }: PhotoGallery3DPro
   const [isInitializing, setIsInitializing] = useState(true)
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [isFullsizeLoading, setIsFullsizeLoading] = useState(false)
-  const controlsRef = useRef<OrbitControls | null>(null)
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
+
+  // Use refs to store Three.js objects
   const sceneRef = useRef<THREE.Scene | null>(null)
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
+  const controlsRef = useRef<OrbitControls | null>(null)
+  const animationFrameRef = useRef<number | null>(null)
+
+  // Store photo objects and their mappings
   const photoObjectsRef = useRef<THREE.Mesh[]>([])
   const photoUrlMapRef = useRef<Map<THREE.Mesh, string>>(new Map())
+
+  // Track loaded and loading images
   const loadedImagesRef = useRef<Set<string>>(new Set())
   const loadingImagesRef = useRef<Set<string>>(new Set())
-  const geometriesRef = useRef<THREE.BufferGeometry[]>([])
-  const materialsRef = useRef<THREE.Material[]>([])
-  const texturesRef = useRef<THREE.Texture[]>([])
 
-  // 初始化Three.js场景
+  // Add a throttling mechanism ref
+  const throttleTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Track if component is mounted
+  const isMountedRef = useRef<boolean>(true)
+
+  // Store resources for proper cleanup
+  const resourcesRef = useRef<{
+    geometries: THREE.BufferGeometry[]
+    materials: THREE.Material[]
+    textures: THREE.Texture[]
+  }>({
+    geometries: [],
+    materials: [],
+    textures: [],
+  })
+
+  // Constants - reduce MAX_CONCURRENT_LOADS for mobile
+  const MAX_CONCURRENT_LOADS = useMemo(() => {
+    // Detect mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      typeof navigator !== 'undefined' ? navigator.userAgent : ''
+    )
+    return isMobile ? 1 : 2
+  }, [])
+
+  // Lower geometry detail for mobile
+  const GEOMETRY_DETAIL = useMemo(() => {
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      typeof navigator !== 'undefined' ? navigator.userAgent : ''
+    )
+    return isMobile ? { sphere: [8, 8], plane: [1, 1] } : { sphere: [16, 16], plane: [1, 1] }
+  }, [])
+
+  // Initialize Three.js scene
   useEffect(() => {
     if (!containerRef.current) return
 
-    // 创建场景
+    // Set mounted ref
+    isMountedRef.current = true
+
+    // Create scene
     const scene = new THREE.Scene()
     sceneRef.current = scene
 
-    // 创建相机
-    const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1000)
+    // Create camera with proper aspect ratio
+    const aspect = 1 // Square container
+    const camera = new THREE.PerspectiveCamera(60, aspect, 0.1, 1000)
     camera.position.z = 15
     cameraRef.current = camera
 
-    // 创建渲染器
+    // Detect if mobile
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+
+    // Create renderer with optimized settings
     const renderer = new THREE.WebGLRenderer({
-      antialias: true,
+      antialias: !isMobile, // Disable antialiasing on mobile
       alpha: true,
-      powerPreference: "high-performance", // 优化性能
+      powerPreference: "high-performance",
+      // Add willReadFrequently attribute to fix the warning
+      canvas: document.createElement('canvas'),
     })
-    renderer.setSize(size, size)
+
+    // Set willReadFrequently attribute to fix the warning
+    if (renderer.domElement.getContext) {
+      const ctx = renderer.domElement.getContext('2d')
+      if (ctx && ('willReadFrequently' in ctx)) {
+        // @ts-ignore - TypeScript doesn't know about willReadFrequently
+        renderer.domElement.getContext('2d', { willReadFrequently: true })
+      }
+    }
+
+    // Set lower pixel ratio for mobile
+    const pixelRatio = isMobile ? 1 : Math.min(window.devicePixelRatio, 2)
+    renderer.setPixelRatio(pixelRatio)
+
+    // Set size based on container
+    const containerSize = Math.min(containerRef.current.offsetWidth, size)
+    renderer.setSize(containerSize, containerSize)
     renderer.setClearColor(0x000000, 0)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)) // 限制像素比以提高性能
+
+    // Add dispose cleanup
     containerRef.current.appendChild(renderer.domElement)
     rendererRef.current = renderer
 
-    // 创建控制器
+    // Create controls with optimized settings
     const controls = new OrbitControls(camera, renderer.domElement)
     controls.enableDamping = true
     controls.dampingFactor = 0.05
     controls.rotateSpeed = 0.5
     controls.enableZoom = true
     controls.autoRotate = true
-    controls.autoRotateSpeed = 0.5
+    controls.autoRotateSpeed = isMobile ? 0.3 : 0.5  // Slower rotation on mobile
     controlsRef.current = controls
 
-    // 创建一个简单的背景
-    const bgGeometry = new THREE.SphereGeometry(30, 32, 32)
+    // Create a simple background with fewer segments on mobile
+    const [segX, segY] = GEOMETRY_DETAIL.sphere
+    const bgGeometry = new THREE.SphereGeometry(30, segX, segY)
     const bgMaterial = new THREE.MeshBasicMaterial({
       color: 0xffffff,
       side: THREE.BackSide,
       transparent: true,
       opacity: 0.1,
     })
+
+    // Store resources for cleanup
+    resourcesRef.current.geometries.push(bgGeometry)
+    resourcesRef.current.materials.push(bgMaterial)
+
     const background = new THREE.Mesh(bgGeometry, bgMaterial)
     scene.add(background)
 
-    // 初始化完成
+    // Initialization complete
     setIsInitializing(false)
 
-    // 动画循环
+    // Lower the frame rate on mobile
+    const frameInterval = isMobile ? 2 : 1 // Run at half FPS on mobile
+    let frameCount = 0
+
+    // Animation loop with proper cleanup and throttling for mobile
     const animate = () => {
-      requestAnimationFrame(animate)
-      controls.update()
-      renderer.render(scene, camera)
-    }
-    animate()
+      if (!isMountedRef.current || !controlsRef.current || !rendererRef.current || !sceneRef.current || !cameraRef.current) return
 
-    // 处理窗口大小变化
-    const handleResize = () => {
-      const newSize = Math.min(containerRef.current?.offsetWidth || size, size)
-      camera.aspect = 1
-      camera.updateProjectionMatrix()
-      renderer.setSize(newSize, newSize)
-    }
-    window.addEventListener("resize", handleResize)
-    handleResize()
-
-    // 清理函数
-    return () => {
-      window.removeEventListener("resize", handleResize)
-      if (containerRef.current && renderer.domElement) {
-        containerRef.current.removeChild(renderer.domElement)
+      // Skip frames on mobile for better performance
+      frameCount++
+      if (frameCount % frameInterval === 0 || !isMobile) {
+        controlsRef.current.update()
+        rendererRef.current.render(sceneRef.current, cameraRef.current)
       }
-      controls.dispose()
-      renderer.dispose()
-    }
-  }, [size])
 
-  // 创建照片对象的函数
+      animationFrameRef.current = requestAnimationFrame(animate)
+    }
+
+    animationFrameRef.current = requestAnimationFrame(animate)
+
+    // Handle window resize
+    const handleResize = () => {
+      if (!isMountedRef.current || !containerRef.current || !cameraRef.current || !rendererRef.current) return
+
+      const newSize = Math.min(containerRef.current.offsetWidth, size)
+      cameraRef.current.aspect = 1
+      cameraRef.current.updateProjectionMatrix()
+      rendererRef.current.setSize(newSize, newSize)
+    }
+
+    // Throttle resize events
+    let resizeTimeout: NodeJS.Timeout
+    const throttledResize = () => {
+      clearTimeout(resizeTimeout)
+      resizeTimeout = setTimeout(handleResize, 100)
+    }
+
+    window.addEventListener("resize", throttledResize)
+
+    // Cleanup function
+    return () => {
+      // Mark component as unmounted
+      isMountedRef.current = false
+
+      window.removeEventListener("resize", throttledResize)
+
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+        animationFrameRef.current = null
+      }
+
+      // Clear any pending throttle timers
+      if (throttleTimerRef.current) {
+        clearTimeout(throttleTimerRef.current)
+        throttleTimerRef.current = null
+      }
+
+      if (containerRef.current && rendererRef.current?.domElement) {
+        containerRef.current.removeChild(rendererRef.current.domElement)
+      }
+
+      // Dispose all resources
+      resourcesRef.current.geometries.forEach((geometry) => geometry.dispose())
+      resourcesRef.current.materials.forEach((material) => material.dispose())
+      resourcesRef.current.textures.forEach((texture) => texture.dispose())
+
+      // Clear arrays
+      resourcesRef.current.geometries = []
+      resourcesRef.current.materials = []
+      resourcesRef.current.textures = []
+
+      // Dispose controls and renderer
+      controlsRef.current?.dispose()
+      controlsRef.current = null
+
+      rendererRef.current?.dispose()
+      rendererRef.current?.forceContextLoss()
+      rendererRef.current = null
+
+      // Clear scene
+      sceneRef.current?.clear()
+      sceneRef.current = null
+
+      // Clear references
+      photoObjectsRef.current = []
+      photoUrlMapRef.current.clear()
+      loadedImagesRef.current.clear()
+      loadingImagesRef.current.clear()
+
+      // Clear camera
+      cameraRef.current = null
+    }
+  }, [size, GEOMETRY_DETAIL])
+
+  // Create photo object function - with optimizations
   const createPhotoObject = (
     url: string,
     texture: THREE.Texture,
@@ -129,16 +265,17 @@ export default function PhotoGallery3D({ images, size = 400 }: PhotoGallery3DPro
     rotation: THREE.Euler,
     aspectRatio: number,
   ) => {
-    if (!sceneRef.current) return null
+    if (!sceneRef.current || !isMountedRef.current) return null
 
-    // 根据图片的宽高比调整照片尺寸
+    // Adjust photo size based on aspect ratio
     const width = 3
     const height = width / aspectRatio
 
-    // 创建照片几何体
-    const photoGeometry = new THREE.PlaneGeometry(width, height)
+    // Create photo geometry - using simplified geometry from constants
+    const [segX, segY] = GEOMETRY_DETAIL.plane
+    const photoGeometry = new THREE.PlaneGeometry(width, height, segX, segY)
 
-    // 创建照片材质 - 使用基础材质，不受光照影响
+    // Create photo material - with optimized settings
     const photoMaterial = new THREE.MeshBasicMaterial({
       map: texture,
       side: THREE.DoubleSide,
@@ -146,69 +283,86 @@ export default function PhotoGallery3D({ images, size = 400 }: PhotoGallery3DPro
       opacity: 0,
     })
 
-    // 创建照片网格
+    // Create photo mesh
     const photo = new THREE.Mesh(photoGeometry, photoMaterial)
     photo.position.copy(position)
     photo.rotation.copy(rotation)
     photo.renderOrder = 1
 
-    // 创建照片边框
-    const frameGeometry = new THREE.PlaneGeometry(width + 0.1, height + 0.1)
+    // Create frame with simplified geometry
+    const frameGeometry = new THREE.PlaneGeometry(width + 0.1, height + 0.1, segX, segY)
     const frameMaterial = new THREE.MeshBasicMaterial({
       color: 0xffffff,
       side: THREE.DoubleSide,
     })
+
     const frame = new THREE.Mesh(frameGeometry, frameMaterial)
     frame.position.copy(position)
     frame.position.z -= 0.01
     frame.rotation.copy(rotation)
     frame.renderOrder = 0
 
-    // 添加到场景
+    // Add to scene
     sceneRef.current.add(frame)
     sceneRef.current.add(photo)
 
-    // 记录照片对象
+    // Track objects
     photoObjectsRef.current.push(photo)
     photoUrlMapRef.current.set(photo, url)
 
-    // 记录资源以便清理
-    texturesRef.current.push(texture)
-    geometriesRef.current.push(photoGeometry)
-    materialsRef.current.push(photoMaterial)
+    // Store resources for cleanup
+    resourcesRef.current.geometries.push(photoGeometry, frameGeometry)
+    resourcesRef.current.materials.push(photoMaterial, frameMaterial)
+    resourcesRef.current.textures.push(texture)
 
-    // 淡入动画
+    // Detect mobile for slower fade in
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      typeof navigator !== 'undefined' ? navigator.userAgent : ''
+    )
+
+    // Fade in animation with optimized approach - slower on mobile
+    let opacity = 0
+    const fadeInSpeed = isMobile ? 0.03 : 0.05
+    const fadeInInterval = isMobile ? 80 : 50
+
     const fadeIn = () => {
+      if (!isMountedRef.current) return
+
+      opacity += fadeInSpeed
+      photoMaterial.opacity = Math.min(opacity, 1)
+
       if (photoMaterial.opacity < 1) {
-        photoMaterial.opacity += 0.02
-        requestAnimationFrame(fadeIn)
+        setTimeout(fadeIn, fadeInInterval)
       }
     }
+
     fadeIn()
 
     return photo
   }
 
-  // 创建随机位置
-  const createRandomPosition = (index: number, total: number) => {
-    // 使用黄金螺旋分布算法，确保照片分布均匀
-    const phi = Math.acos(-1 + (2 * index) / total)
-    const theta = Math.sqrt(total * Math.PI) * phi
+  // Create positions with a memoized approach to reduce calculations
+  const positions = useMemo(() => {
+    return images.map((_, index) => {
+      // Use golden spiral distribution for even spacing
+      const phi = Math.acos(-1 + (2 * index) / images.length)
+      const theta = Math.sqrt(images.length * Math.PI) * phi
 
-    // 创建一个随机半径，使照片分布在一个球形空间内
-    const radius = 8 + Math.random() * 4
+      // Use fixed radius to reduce calculations
+      const radius = 10
 
-    // 计算3D坐标
-    const x = radius * Math.sin(phi) * Math.cos(theta)
-    const y = radius * Math.sin(phi) * Math.sin(theta)
-    const z = radius * Math.cos(phi)
+      // Calculate 3D coordinates
+      const x = radius * Math.sin(phi) * Math.cos(theta)
+      const y = radius * Math.sin(phi) * Math.sin(theta)
+      const z = radius * Math.cos(phi)
 
-    return new THREE.Vector3(x, y, z)
-  }
+      return new THREE.Vector3(x, y, z)
+    })
+  }, [images.length])
 
-  // 创建随机旋转
+  // Create random rotation with limited angles
   const createRandomRotation = () => {
-    // 添加一些随机旋转，使照片看起来更自然，但角度更小
+    // Use smaller rotation angles
     const rotX = (Math.random() - 0.5) * 0.1
     const rotY = (Math.random() - 0.5) * 0.1
     const rotZ = (Math.random() - 0.5) * 0.1
@@ -216,127 +370,221 @@ export default function PhotoGallery3D({ images, size = 400 }: PhotoGallery3DPro
     return new THREE.Euler(rotX, rotY, rotZ)
   }
 
-  // 加载图片的函数
+  // Optimized texture loader with shared instance
+  const textureLoader = useMemo(() => new THREE.TextureLoader(), [])
+
+  // Load image function with optimized texture loading
   const loadImage = (imageData: (typeof images)[0], index: number) => {
+    if (!isMountedRef.current) return
+
     const { thumbnail } = imageData
 
-    // 如果已经加载或正在加载，则跳过
+    // Skip if already loaded or loading
     if (loadedImagesRef.current.has(thumbnail) || loadingImagesRef.current.has(thumbnail)) {
       return
     }
 
-    // 标记为正在加载
+    // Mark as loading
     loadingImagesRef.current.add(thumbnail)
 
-    // 创建图片元素来获取宽高比
-    const img = new Image()
-    img.crossOrigin = "anonymous"
-    img.onload = () => {
-      // 获取图片宽高比
-      const aspectRatio = img.width / img.height
+    // Use ImageBitmap for better performance on modern browsers if available
+    if ('createImageBitmap' in window) {
+      fetch(thumbnail)
+        .then(response => response.blob())
+        .then(blob => {
+          if (!isMountedRef.current) return
+          return createImageBitmap(blob)
+        })
+        .then(imageBitmap => {
+          if (!isMountedRef.current || !imageBitmap) return
 
-      // 创建纹理
-      const textureLoader = new THREE.TextureLoader()
-      textureLoader.load(
-        thumbnail,
-        (texture) => {
-          // 创建照片对象
-          const position = createRandomPosition(index, images.length)
+          // Get aspect ratio
+          const aspectRatio = imageBitmap.width / imageBitmap.height
+
+          // Create texture
+          const texture = new THREE.Texture()
+          texture.image = imageBitmap
+          texture.needsUpdate = true
+
+          // Apply texture optimization
+          texture.minFilter = THREE.LinearFilter
+          texture.generateMipmaps = false
+
+          // Create photo object
+          const position = positions[index]
           const rotation = createRandomRotation()
           createPhotoObject(thumbnail, texture, position, rotation, aspectRatio)
 
-          // 标记为已加载
+          // Mark as loaded
           loadedImagesRef.current.add(thumbnail)
           loadingImagesRef.current.delete(thumbnail)
 
-          // 检查是否需要加载更多图片
+          // Check for more images to load
+          checkAndLoadMoreImages()
+        })
+        .catch(() => {
+          // Fallback to traditional loading on error
+          loadingImagesRef.current.delete(thumbnail)
+          loadImageTraditional(imageData, index)
+        })
+    } else {
+      // Fallback for browsers without createImageBitmap
+      loadImageTraditional(imageData, index)
+    }
+  }
+
+  // Traditional image loading as fallback
+  const loadImageTraditional = (imageData: (typeof images)[0], index: number) => {
+    if (!isMountedRef.current) return
+
+    const { thumbnail } = imageData
+
+    // Skip if already loaded or loading
+    if (loadedImagesRef.current.has(thumbnail) || loadingImagesRef.current.has(thumbnail)) {
+      return
+    }
+
+    // Mark as loading
+    loadingImagesRef.current.add(thumbnail)
+
+    // Create image to get aspect ratio
+    const img = new Image()
+    img.crossOrigin = "anonymous"
+
+    img.onload = () => {
+      if (!isMountedRef.current) return
+
+      // Get aspect ratio
+      const aspectRatio = img.width / img.height
+
+      // Load texture
+      textureLoader.load(
+        thumbnail,
+        (texture) => {
+          if (!isMountedRef.current) return
+
+          // Apply texture optimization
+          texture.minFilter = THREE.LinearFilter
+          texture.generateMipmaps = false
+
+          // Create photo object
+          const position = positions[index]
+          const rotation = createRandomRotation()
+          createPhotoObject(thumbnail, texture, position, rotation, aspectRatio)
+
+          // Mark as loaded
+          loadedImagesRef.current.add(thumbnail)
+          loadingImagesRef.current.delete(thumbnail)
+
+          // Check for more images to load
           checkAndLoadMoreImages()
         },
         undefined,
         () => {
-          // 加载失败
+          // Handle load error
+          if (!isMountedRef.current) return
           loadingImagesRef.current.delete(thumbnail)
           checkAndLoadMoreImages()
         },
       )
     }
+
     img.onerror = () => {
-      // 加载失败
+      // Handle error
+      if (!isMountedRef.current) return
       loadingImagesRef.current.delete(thumbnail)
       checkAndLoadMoreImages()
     }
+
     img.src = thumbnail
   }
 
-  // 检查是否在视野内
+  // Optimized frustum checking
+  const frustum = useMemo(() => new THREE.Frustum(), [])
+  const projScreenMatrix = useMemo(() => new THREE.Matrix4(), [])
+
+  // Check if position is in view frustum
   const isInViewFrustum = (position: THREE.Vector3) => {
-    if (!cameraRef.current) return false
+    if (!cameraRef.current || !isMountedRef.current) return false
 
-    const frustum = new THREE.Frustum()
-    const projScreenMatrix = new THREE.Matrix4()
+    projScreenMatrix.multiplyMatrices(
+      cameraRef.current.projectionMatrix,
+      cameraRef.current.matrixWorldInverse
+    )
 
-    projScreenMatrix.multiplyMatrices(cameraRef.current.projectionMatrix, cameraRef.current.matrixWorldInverse)
     frustum.setFromProjectionMatrix(projScreenMatrix)
-
     return frustum.containsPoint(position)
   }
 
-  // 检查并加载更多图片
+  // Check and load more images with throttling
   const checkAndLoadMoreImages = () => {
-    // 限制同时加载的图片数量
+    if (!isMountedRef.current) return
+
+    // Don't run if throttled
+    if (throttleTimerRef.current) return
+
+    // Set throttle
+    throttleTimerRef.current = setTimeout(() => {
+      throttleTimerRef.current = null
+    }, 500)
+
+    // Limit concurrent loads
     if (loadingImagesRef.current.size >= MAX_CONCURRENT_LOADS) return
 
-    // 计算哪些图片在视野内但尚未加载
+    // Find visible unloaded images
     const visibleUnloadedImages = images
       .filter((img, index) => {
-        // 如果已加载或正在加载，则跳过
+        // Skip if already loaded or loading
         if (loadedImagesRef.current.has(img.thumbnail) || loadingImagesRef.current.has(img.thumbnail)) {
           return false
         }
 
-        // 计算该图片的位置
-        const position = createRandomPosition(index, images.length)
+        // Use pre-calculated position
+        const position = positions[index]
 
-        // 检查是否在视野内
+        // Check if in view
         return isInViewFrustum(position)
       })
-      .slice(0, 2) // 最多加载2张
+      .slice(0, 1) // Load just one at a time for better performance
 
-    // 如果视野内没有未加载的图片，则加载任意未加载的图片
+    // If no visible images, load any unloaded image
     if (visibleUnloadedImages.length === 0) {
       const unloadedImages = images
         .filter((img) => !loadedImagesRef.current.has(img.thumbnail) && !loadingImagesRef.current.has(img.thumbnail))
-        .slice(0, 2)
+        .slice(0, 1)
 
-      unloadedImages.forEach((img, i) => {
+      unloadedImages.forEach((img) => {
         const originalIndex = images.findIndex((image) => image.thumbnail === img.thumbnail)
         loadImage(img, originalIndex)
       })
     } else {
-      // 加载视野内的图片
-      visibleUnloadedImages.forEach((img, i) => {
+      // Load visible images
+      visibleUnloadedImages.forEach((img) => {
         const originalIndex = images.findIndex((image) => image.thumbnail === img.thumbnail)
         loadImage(img, originalIndex)
       })
     }
   }
 
-  // 处理点击事件
-  const handleClick = (event: React.MouseEvent) => {
-    if (!rendererRef.current || !cameraRef.current) return
+  // Memoize raycaster to avoid recreating
+  const raycaster = useMemo(() => new THREE.Raycaster(), [])
+  const mouse = useMemo(() => new THREE.Vector2(), [])
 
-    // 计算鼠标位置
+  // Handle click with optimized raycasting
+  const handleClick = (event: React.MouseEvent) => {
+    if (!rendererRef.current || !cameraRef.current || !isMountedRef.current) return
+
+    // Calculate mouse position
     const rect = rendererRef.current.domElement.getBoundingClientRect()
-    const mouse = new THREE.Vector2(
+    mouse.set(
       ((event.clientX - rect.left) / rect.width) * 2 - 1,
       -((event.clientY - rect.top) / rect.height) * 2 + 1,
     )
 
-    // 创建射线投射器
-    const raycaster = new THREE.Raycaster()
+    // Update raycaster
     raycaster.setFromCamera(mouse, cameraRef.current)
 
-    // 检测相交的对象
+    // Check for intersections
     const intersects = raycaster.intersectObjects(photoObjectsRef.current)
 
     if (intersects.length > 0) {
@@ -344,11 +592,13 @@ export default function PhotoGallery3D({ images, size = 400 }: PhotoGallery3DPro
       const thumbnailUrl = photoUrlMapRef.current.get(selectedObject)
 
       if (thumbnailUrl) {
-        // 找到对应的高清图URL
+        // Find corresponding fullsize image
         const imageData = images.find((img) => img.thumbnail === thumbnailUrl)
         if (imageData) {
           setIsFullsizeLoading(true)
           setSelectedImage(imageData.fullsize)
+
+          // Stop auto-rotation
           if (controlsRef.current) {
             controlsRef.current.autoRotate = false
           }
@@ -357,63 +607,68 @@ export default function PhotoGallery3D({ images, size = 400 }: PhotoGallery3DPro
     }
   }
 
-  // 关闭全屏图片
+  // Close fullsize image
   const closeFullsizeImage = () => {
     setSelectedImage(null)
     setIsFullsizeLoading(false)
-    if (controlsRef.current) {
+
+    // Resume auto-rotation
+    if (controlsRef.current && isMountedRef.current) {
       controlsRef.current.autoRotate = true
     }
   }
 
-  // 初始加载第一批图片
+  // Load initial images with reduced timers for mobile
   useEffect(() => {
-    if (!isInitializing && images.length > 0) {
-      // 初始只加载前2张图片
-      for (let i = 0; i < Math.min(2, images.length); i++) {
-        loadImage(images[i], i)
+    if (!isInitializing && images.length > 0 && isMountedRef.current) {
+      // Detect mobile
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      )
+
+      // Load just one image initially for faster startup
+      if (images.length > 0) {
+        loadImage(images[0], 0)
       }
 
-      // 添加控制器变化事件监听，当视角变化时检查并加载新进入视野的照片
+      // Add control change listener with throttling
+      let timeout: NodeJS.Timeout
       const handleControlChange = () => {
-        checkAndLoadMoreImages()
+        if (!isMountedRef.current) return
+
+        clearTimeout(timeout)
+        timeout = setTimeout(() => {
+          checkAndLoadMoreImages()
+        }, isMobile ? 500 : 300) // More throttling on mobile
       }
 
       if (controlsRef.current) {
         controlsRef.current.addEventListener("change", handleControlChange)
       }
 
+      // Set a timer to load more images gradually - longer interval for mobile
+      const loadInterval = isMobile ? 3000 : 2000
+      const loadMoreTimer = setInterval(() => {
+        if (!isMountedRef.current) return
+
+        checkAndLoadMoreImages()
+
+        // Stop timer if all images are loaded
+        if (loadedImagesRef.current.size >= images.length) {
+          clearInterval(loadMoreTimer)
+        }
+      }, loadInterval)
+
       return () => {
+        clearTimeout(timeout)
+        clearInterval(loadMoreTimer)
+
         if (controlsRef.current) {
           controlsRef.current.removeEventListener("change", handleControlChange)
         }
       }
     }
-  }, [isInitializing, images])
-
-  // 在组件卸载时清理资源
-  useEffect(() => {
-    return () => {
-      // 清理所有资源
-      geometriesRef.current.forEach(geometry => geometry.dispose())
-      materialsRef.current.forEach(material => material.dispose())
-      texturesRef.current.forEach(texture => texture.dispose())
-
-      // 清理渲染器
-      if (rendererRef.current) {
-        rendererRef.current.dispose()
-        rendererRef.current.forceContextLoss()
-      }
-
-      // 清理场景
-      if (sceneRef.current) {
-        sceneRef.current.clear()
-      }
-    }
-  }, [])
-
-  // 限制同时加载的图片数量
-  const MAX_CONCURRENT_LOADS = 2
+  }, [isInitializing, images, positions])
 
   return (
     <div className="relative">
@@ -427,7 +682,7 @@ export default function PhotoGallery3D({ images, size = 400 }: PhotoGallery3DPro
       {isInitializing && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/30 backdrop-blur-sm rounded-lg">
           <div className="w-8 h-8 border-4 border-rose-500 border-t-transparent rounded-full animate-spin mb-2"></div>
-          <div className="text-sm text-rose-600">初始化中...</div>
+          <div className="text-sm text-rose-600">Initializing...</div>
         </div>
       )}
 
@@ -464,7 +719,7 @@ export default function PhotoGallery3D({ images, size = 400 }: PhotoGallery3DPro
 
               <motion.img
                 src={selectedImage}
-                alt="高清照片"
+                alt="High-resolution photo"
                 className="w-full h-full object-contain rounded-lg border-4 border-white shadow-2xl"
                 onLoad={() => setIsFullsizeLoading(false)}
                 layoutId={`image-${selectedImage}`}
@@ -476,4 +731,3 @@ export default function PhotoGallery3D({ images, size = 400 }: PhotoGallery3DPro
     </div>
   )
 }
-
