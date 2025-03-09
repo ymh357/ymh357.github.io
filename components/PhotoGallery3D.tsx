@@ -104,7 +104,7 @@ export default function PhotoGallery3D({ images, size = 400 }: PhotoGallery3DPro
 
     // Create renderer with optimized settings
     const renderer = new THREE.WebGLRenderer({
-      antialias: !isMobile, // Disable antialiasing on mobile
+      antialias: true,
       alpha: true,
       powerPreference: "high-performance",
       // Add willReadFrequently attribute to fix the warning
@@ -627,10 +627,10 @@ export default function PhotoGallery3D({ images, size = 400 }: PhotoGallery3DPro
         navigator.userAgent
       )
 
-      // Load just one image initially for faster startup
-      if (images.length > 0) {
-        loadImage(images[0], 0)
-      }
+      // 加载所有图片
+      images.forEach((image, index) => {
+        loadImage(image, index)
+      })
 
       // Add control change listener with throttling
       let timeout: NodeJS.Timeout
@@ -647,23 +647,8 @@ export default function PhotoGallery3D({ images, size = 400 }: PhotoGallery3DPro
         controlsRef.current.addEventListener("change", handleControlChange)
       }
 
-      // Set a timer to load more images gradually - longer interval for mobile
-      const loadInterval = isMobile ? 3000 : 2000
-      const loadMoreTimer = setInterval(() => {
-        if (!isMountedRef.current) return
-
-        checkAndLoadMoreImages()
-
-        // Stop timer if all images are loaded
-        if (loadedImagesRef.current.size >= images.length) {
-          clearInterval(loadMoreTimer)
-        }
-      }, loadInterval)
-
       return () => {
         clearTimeout(timeout)
-        clearInterval(loadMoreTimer)
-
         if (controlsRef.current) {
           controlsRef.current.removeEventListener("change", handleControlChange)
         }

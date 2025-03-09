@@ -73,7 +73,7 @@ export default function Invitation() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // 婚礼日期 - 2025年5月1日
-  const weddingDate = new Date(2025, 5, 1) // 月份是从0开始的，所以5代表6月
+  const weddingDate = new Date(2025, 4, 1) // 月份是从0开始的，所以4代表5月
 
   const [coverRef, coverInView] = useInView({ threshold: 0.5 })
   const [detailsRef, detailsInView] = useInView({ threshold: 0.5 })
@@ -88,8 +88,8 @@ export default function Invitation() {
   const photos = useMemo(() => {
     return Array.from({ length: 35 }).map((_, i) => {
       return {
-        thumbnail: `/photos/wedding-photo_${i + 1}-min.jpg`,
-        fullsize: `/photos/wedding-photo${i + 1}.JPG`,
+        thumbnail: `/photos/wedding-photo_${i}-min.jpg`,
+        fullsize: `/photos/wedding-photo_${i}-org.JPG`,
       }
     })
   }, [])
