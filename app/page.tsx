@@ -260,7 +260,7 @@ export default function Invitation() {
     const unsubscribeGroom = onValue(groomMessageRef, (snapshot) => {
       const data = snapshot.val();
       if (data?.message) {
-        setGroomMessage(sanitizeInput(data.message));
+        setGroomMessage(sanitizeInput(data.message.replace(/\\n/g, '\n')));
       }
     });
 
@@ -382,7 +382,7 @@ export default function Invitation() {
               >
                 <X size={16} />
               </button>
-              <p className="mt-4 text-sm text-gray-700 leading-relaxed">
+              <p className="mt-4 text-sm text-gray-700 leading-relaxed whitespace-pre-line">
                 {groomMessage}
               </p>
               <div className="text-right mt-2 text-rose-500 font-script">
