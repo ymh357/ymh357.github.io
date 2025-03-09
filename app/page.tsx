@@ -23,11 +23,12 @@ import {
   Calendar,
   Check,
   ChevronDown,
+  CirclePlay,
   Clock,
-  Crown,
   Heart,
   Mail,
   MapPin,
+  MessageSquareMore,
   Music,
   Pause,
   Phone,
@@ -276,6 +277,8 @@ export default function Invitation() {
     };
   }, []);
 
+  const [hasClickedGroomMessage, setHasClickedGroomMessage] = useState(false);
+
   return (
     <div className="relative bg-wedding min-h-screen text-gray-800 overflow-hidden">
       {/* 添加音频元素 */}
@@ -333,12 +336,39 @@ export default function Invitation() {
       <div className="fixed left-4 top-4 z-[500] flex flex-col gap-2">
         {/* 新郎头像和消息 */}
         <div className="relative">
-          <button
-            onClick={() => setShowGroomMessage(prev => !prev)}
-            className="w-8 h-8 rounded-full bg-white overflow-hidden border-2 border-rose-300 hover:border-rose-500 transition-all duration-300 shadow-lg hover:scale-105 flex items-center justify-center"
+          <motion.button
+            style={{
+              originX: 0, // 设置变换原点在左侧
+              originY: 1,  // 设置变换原点在底部
+            }}
+            initial={{
+              opacity: 0,
+              scale: 0,
+            }}
+            animate={
+              !hasClickedGroomMessage
+                ? {
+                  scale: [0, 1],
+                  opacity: [0, 1],
+                }
+                : { scale: 1, opacity: 1 }
+            }
+            transition={
+              !hasClickedGroomMessage
+                ? {
+                  duration: 1.5,
+                  repeat: Infinity,
+                  repeatType: "reverse",
+                  ease: "easeInOut"
+                }
+                : { duration: 0.3 }
+            }
+            onClick={() => {
+              setShowGroomMessage(prev => !prev);
+              setHasClickedGroomMessage(true);
+            }}
           >
-            <Crown className="w-4 h-4 text-rose-500" />
-          </button>
+            <MessageSquareMore className="w-8 h-8 text-rose-500" />          </motion.button>
 
           {showGroomMessage && (
             <motion.div
@@ -352,18 +382,18 @@ export default function Invitation() {
               >
                 <X size={16} />
               </button>
-              <p className="text-sm text-gray-700 leading-relaxed">
+              <p className="mt-4 text-sm text-gray-700 leading-relaxed">
                 {groomMessage}
               </p>
               <div className="text-right mt-2 text-rose-500 font-script">
-                - 于明昊
+                - Yours Truly
               </div>
             </motion.div>
           )}
         </div>
 
         {/* 新娘头像和消息 */}
-        <div className="relative">
+        {/* <div className="relative">
           <button
             onClick={() => setShowBrideMessage(prev => !prev)}
             className="w-8 h-8 rounded-full bg-white overflow-hidden border-2 border-rose-300 hover:border-rose-500 transition-all duration-300 shadow-lg hover:scale-105 flex items-center justify-center"
@@ -391,7 +421,7 @@ export default function Invitation() {
               </div>
             </motion.div>
           )}
-        </div>
+        </div> */}
       </div>
 
       {/* Cover Section */}
@@ -415,9 +445,26 @@ export default function Invitation() {
           <FloralDivider />
 
           <p className="font-serif text-xl mb-4">2025年5月1日</p>
-          <p className="font-serif text-lg mb-8">威海 · 铂丽斯</p>
+          <p className="font-serif text-lg ">威海 · 铂丽斯</p>
 
           <CountdownTimer targetDate={weddingDate} />
+
+          <motion.a
+            href="https://www.hunliji.com/m/ling-xi/mv-card/index.html?card_id=MTE2NzkwMTExZmlyZV9jbG91ZA"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mb-6 inline-flex items-center justify-center px-6 py-3 rounded-full bg-rose-500 text-white hover:bg-rose-600 transition-all duration-300 hover:scale-105 shadow-lg group relative overflow-hidden"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <span className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+            <span className="relative flex items-center">
+              我们的视频
+              <CirclePlay className=" ml-2 w-6 h-6 text-white  flex-shrink-0" />
+
+            </span>
+          </motion.a>
+
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
             <motion.div
               animate={{ y: [0, 10, 0] }}
@@ -444,7 +491,7 @@ export default function Invitation() {
           <FloralDivider icon={<Heart className="text-rose-400 fill-rose-200" size={16} />} />
 
           <div className="space-y-6">
-            <div className="flex items-start">
+            <div className="flex items-center">
               <Calendar className="w-6 h-6 text-rose-500 mr-4 flex-shrink-0" />
               <div>
                 <h3 className="font-serif font-medium text-lg">日期</h3>
@@ -452,7 +499,7 @@ export default function Invitation() {
               </div>
             </div>
 
-            <div className="flex items-start">
+            <div className="flex items-center">
               <Clock className="w-6 h-6 text-rose-500 mr-4 flex-shrink-0" />
               <div>
                 <h3 className="font-serif font-medium text-lg">时间</h3>
@@ -460,7 +507,7 @@ export default function Invitation() {
               </div>
             </div>
 
-            <div className="flex items-start">
+            <div className="flex items-center">
               <MapPin className="w-6 h-6 text-rose-500 mr-4 flex-shrink-0" />
               <div>
                 <h3 className="font-serif font-medium text-lg">地点</h3>
@@ -468,7 +515,7 @@ export default function Invitation() {
               </div>
             </div>
 
-            <div className="flex items-start">
+            <div className="flex items-center">
               <Mail className="w-6 h-6 text-rose-500 mr-4 flex-shrink-0" />
               <div>
                 <h3 className="font-serif font-medium text-lg">联系方式</h3>
@@ -476,7 +523,7 @@ export default function Invitation() {
               </div>
             </div>
 
-            <div className="flex items-start">
+            <div className="flex items-center">
               <Phone className="w-6 h-6 text-rose-500 mr-4 flex-shrink-0" />
               <div>
                 <h3 className="font-serif font-medium text-lg">电话</h3>
