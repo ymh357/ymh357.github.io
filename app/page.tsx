@@ -247,15 +247,12 @@ export default function Invitation() {
   };
 
   const [showGroomMessage, setShowGroomMessage] = useState(false);
-  const [showBrideMessage, setShowBrideMessage] = useState(false);
   const [groomMessage, setGroomMessage] = useState("加载中...");
-  const [brideMessage, setBrideMessage] = useState("加载中...");
 
   useEffect(() => {
 
     // 添加新郎新娘消息的监听
     const groomMessageRef = ref(db, 'weddingMessages/groom');
-    const brideMessageRef = ref(db, 'weddingMessages/bride');
 
     const unsubscribeGroom = onValue(groomMessageRef, (snapshot) => {
       const data = snapshot.val();
@@ -264,16 +261,8 @@ export default function Invitation() {
       }
     });
 
-    const unsubscribeBride = onValue(brideMessageRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data?.message) {
-        setBrideMessage(sanitizeInput(data.message));
-      }
-    });
-
     return () => {
       unsubscribeGroom();
-      unsubscribeBride();
     };
   }, []);
 
