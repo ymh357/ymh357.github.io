@@ -492,7 +492,7 @@ export default function Invitation() {
               <Clock className="w-6 h-6 text-rose-500 mr-4 flex-shrink-0" />
               <div>
                 <h3 className="font-serif font-medium text-lg">时间</h3>
-                <p>婚礼仪式: 12:08</p>
+                <p>婚礼仪式: 11:28</p>
               </div>
             </div>
 
