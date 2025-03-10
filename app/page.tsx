@@ -428,7 +428,7 @@ export default function Invitation() {
           <div className="mb-6 relative w-32 h-32 mx-auto rounded-2xl overflow-hidden">
             <Image src="/monogram.jpg" alt="Wedding monogram" fill className="object-contain" />
           </div>
-          <h1 className="font-script text-3xl mb-4 text-rose-700">刘宽&nbsp;&nbsp;&&nbsp;&nbsp;于明昊</h1>
+          <h1 className="font-script text-3xl mb-4 text-rose-700">于明昊&nbsp;&nbsp;&&nbsp;&nbsp;刘宽</h1>
           <h2 className="font-serif text-2xl font-light mb-8 text-rose-600">诚挚邀请您参加我们的婚礼</h2>
 
           <FloralDivider />
