@@ -307,16 +307,22 @@ export default function Invitation() {
       <AnimatedHearts count={15} />
 
       {/* Navigation dots */}
-      <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-40">
+      <div className="fixed right-4 top-1/2 -translate-y-1/2 z-40">
         <div className="flex flex-col gap-4">
           {[0, 1, 2, 3, 4, 5].map((index) => (
             <button
               key={index}
               onClick={() => scrollToSection(index)}
-              className={`w-3 h-3 rounded-full transition-all duration-300 ${currentSection === index ? "bg-rose-500 scale-125" : "bg-gray-300"
-                }`}
+              className="w-5 h-5 flex items-center justify-center"
               aria-label={`Go to section ${index + 1}`}
-            />
+            >
+              <div
+                className={`w-3 h-3 rounded-full transition-all duration-300 ${currentSection === index
+                  ? "bg-rose-500 transform scale-125"
+                  : "bg-gray-300"
+                  }`}
+              />
+            </button>
           ))}
         </div>
       </div>
