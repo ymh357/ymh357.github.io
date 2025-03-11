@@ -112,11 +112,7 @@ module.exports = {
         float: "float 3s ease-in-out infinite",
         "pulse-slow": "pulse-slow 4s ease-in-out infinite",
       },
-      backgroundImage: {
-        "floral-pattern": "url('/placeholder.svg?height=200&width=200&text=FlowerPattern')",
-      },
     },
   },
   plugins: [require("tailwindcss-animate")],
-}
-
+};

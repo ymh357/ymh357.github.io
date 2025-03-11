@@ -3,7 +3,6 @@
 import type React from 'react';
 import {
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -35,14 +34,16 @@ import {
   X,
 } from 'lucide-react';
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
 import { useInView } from 'react-intersection-observer';
 
+import Album from '@/components/album';
 import AMapLocation from '@/components/amap-location';
 import AnimatedHearts from '@/components/decorative/animated-heart';
 import CountdownTimer from '@/components/decorative/countdown-timer';
 import FloralDivider from '@/components/decorative/floral-divider';
 import MapDirectionsButton from '@/components/map-directions-button';
-import PhotoGallery3D from '@/components/PhotoGallery3D';
+import ParentInvitation from '@/components/parent-invitation';
 import {
   Alert,
   AlertDescription,
@@ -56,6 +57,8 @@ import {
 } from '@/lib/firebase';
 
 export default function Invitation() {
+  const searchParams = useSearchParams()
+  const version = searchParams.get("v")
   const [currentSection, setCurrentSection] = useState(0)
   const [name, setName] = useState("")
   const [attending, setAttending] = useState<boolean | null>(null)
@@ -82,28 +85,6 @@ export default function Invitation() {
   const [rsvpRef, rsvpInView] = useInView({ threshold: 0.5 })
   const [mapRef, mapInView] = useInView({ threshold: 0.5 })
   const [messageBoardRef, messageBoardInView] = useInView({ threshold: 0.5 })
-
-  // 添加一个 useEffect 来处理窗口大小
-  const [gallerySize, setGallerySize] = useState(300)
-
-  const photos = useMemo(() => {
-    return Array.from({ length: 35 }).map((_, i) => {
-      return {
-        thumbnail: `/photos/wedding-photo_${i}-min.jpg`,
-        fullsize: `/photos/wedding-photo_${i}-org.JPG`,
-      }
-    })
-  }, [])
-  useEffect(() => {
-    const updateSize = () => {
-      setGallerySize(window.innerWidth * 0.8)
-    }
-
-    updateSize()
-    window.addEventListener('resize', updateSize)
-
-    return () => window.removeEventListener('resize', updateSize)
-  }, [])
 
   // Initialize Firebase Analytics on client side
   useEffect(() => {
@@ -267,6 +248,15 @@ export default function Invitation() {
   }, []);
 
   const [hasClickedGroomMessage, setHasClickedGroomMessage] = useState(false);
+
+  const [isParentVersion, setIsParentVersion] = useState(false)
+  useEffect(() => {
+    setIsParentVersion(version === "v2")
+  }, [version])
+
+  if (isParentVersion) {
+    return <ParentInvitation />
+  }
 
   return (
     <div className="relative bg-wedding min-h-screen text-gray-800 overflow-hidden">
@@ -543,12 +533,7 @@ export default function Invitation() {
 
           <FloralDivider />
 
-          <div className="flex justify-center mb-8">
-            <PhotoGallery3D
-              images={photos}
-              size={gallerySize}
-            />
-          </div>
+          <Album />
 
           <div className="text-center mt-6 text-sm text-rose-500 font-serif italic">
             <p>拖动旋转 • 点击图片查看</p>
