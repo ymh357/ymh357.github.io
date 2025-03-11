@@ -2,6 +2,7 @@
 
 import type React from 'react';
 import {
+  Suspense,
   useEffect,
   useRef,
   useState,
@@ -57,6 +58,14 @@ import {
 } from '@/lib/firebase';
 
 export default function Invitation() {
+  return (
+    <Suspense fallback={<LoadingPlaceholder />}>
+      <InvitationContent />
+    </Suspense>
+  )
+}
+
+function InvitationContent() {
   const searchParams = useSearchParams()
   const version = searchParams.get("v")
   const [currentSection, setCurrentSection] = useState(0)
@@ -739,6 +748,15 @@ export default function Invitation() {
           <p className="text-rose-400">© 2025</p>
         </div>
       </footer>
+    </div>
+  )
+}
+
+// 可以添加一个加载占位符组件
+function LoadingPlaceholder() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-rose-500"></div>
     </div>
   )
 }
