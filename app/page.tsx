@@ -439,7 +439,7 @@ function InvitationContent() {
           <FloralDivider />
 
           <p className="font-serif text-xl mb-4">2025年5月1日</p>
-          <p className="font-serif text-lg ">威海 · 铂丽斯</p>
+          <p className="font-serif text-lg ">威海 · 铂丽斯酒店 · 四楼 · 安然厅</p>
 
           <CountdownTimer targetDate={weddingDate} />
 
@@ -505,7 +505,7 @@ function InvitationContent() {
               <MapPin className="w-6 h-6 text-rose-500 mr-4 flex-shrink-0" />
               <div>
                 <h3 className="font-serif font-medium text-lg">地点</h3>
-                <p>山东省威海市经济技术开发区黄海路19号</p>
+                <p>山东省威海市铂丽斯酒店 四楼 安然厅</p>
               </div>
             </div>
 
