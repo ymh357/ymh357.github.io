@@ -70,7 +70,7 @@ function InvitationContent() {
   const version = searchParams.get("v")
   const [currentSection, setCurrentSection] = useState(0)
   const [name, setName] = useState("")
-  const [attending, setAttending] = useState<boolean | null>(null)
+  const [attending, setAttending] = useState<boolean | null>(true)
   const [message, setMessage] = useState("")
   const [submitted, setSubmitted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
